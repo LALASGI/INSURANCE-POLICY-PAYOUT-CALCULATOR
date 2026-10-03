@@ -1,5 +1,533 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lala SGI Policy Calculator</title><style>
-:root{color-scheme:light dark;--bg:light-dark(#f4f7fb,#11151b);--s:light-dark(#fff,#1a2028);--ss:light-dark(#f7f9fc,#202731);--t:light-dark(#172033,#f3f6fb);--m:light-dark(#697386,#aab4c3);--b:light-dark(#dce3ec,#313b49);--a:light-dark(#1f5eff,#6f96ff);--as:light-dark(#eaf0ff,#263657);--g:light-dark(#087443,#55c991)}*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--t)}.shell{width:min(1120px,100%);margin:auto;padding:28px 18px}.brand{display:flex;gap:14px;align-items:center;margin-bottom:22px}.logo{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--a);color:#fff;font-weight:800}.brand h1{margin:0;font-size:30px}.sub{margin:4px 0;color:var(--m);font-size:14px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}.tab,.card{background:var(--s);border:1px solid var(--b);border-radius:16px}.tab{padding:16px;text-align:left;color:var(--t);cursor:pointer}.tab.active{border-color:var(--a);background:var(--as)}.tt{font-weight:750}.td{color:var(--m);font-size:12px;margin-top:4px}.card{padding:20px}.title{font-size:17px;font-weight:750;margin-bottom:16px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end}label{display:block;font-size:12px;font-weight:700;color:var(--m);margin-bottom:7px}input{width:100%;padding:12px;border:1px solid var(--b);border-radius:11px;background:var(--ss);color:var(--t);font-size:15px}.payouts{display:flex;gap:8px}.pb,.toggle{border:1px solid var(--b);background:var(--ss);color:var(--t);border-radius:10px;padding:10px 14px;font-weight:750;cursor:pointer}.pb.active{background:var(--a);color:#fff;border-color:var(--a)}.manual{position:relative}.manual span{position:absolute;right:12px;top:12px;color:var(--m);font-weight:700}.manual input{padding-right:30px}.results{margin-top:22px}.rhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.rhead h2{margin:0;font-size:16px}.status{color:var(--g);font-size:12px;font-weight:700}.table{overflow:auto;border:1px solid var(--b);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:12px;border-bottom:1px solid var(--b);text-align:right;white-space:nowrap}th{background:var(--ss);color:var(--m);font-size:11px;text-transform:uppercase}td{font-size:14px;font-weight:650}th:first-child,td:first-child{text-align:left}tr:last-child td{border:0}.hidden{display:none}footer{text-align:center;color:var(--m);font-size:12px;padding:24px}footer a{color:var(--a);font-weight:700}@media(max-width:760px){.tabs,.grid{grid-template-columns:1fr}.shell{padding:20px 12px}.card{padding:16px}}
-</style></head><body><main class="shell"><header class="brand"><div class="logo">LS</div><div><h1>SGI Policy Calculator</h1><p class="sub">Policy payout, net amount and margin calculation</p></div></header><nav class="tabs"><button class="tab active" id="tabTotal"><div class="tt">Payout Based on Total Premium</div><div class="td">Calculate payout from total premium including GST.</div></button><button class="tab" id="tabOd"><div class="tt">Payout Based on OD Only</div><div class="td">Calculate payout directly from OD Premium.</div></button></nav><section class="card"><div id="totalPanel"><div class="title">Policy Details</div><div class="grid"><div><label>Total Premium</label><input id="totalPremium" type="number" min="0" step=".01" placeholder="Enter total premium"></div><div><label>Payout %</label><div class="payouts"><button class="pb active" data-p="48">48%</button><button class="pb" data-p="50">50%</button><button class="pb" data-p="55">55%</button></div></div><div><label>Policy Sale Price</label><input id="totalSalePrice" type="number" min="0" step=".01" placeholder="Enter policy sale price"></div></div></div><div id="odPanel" class="hidden"><div class="title">Policy Details</div><div class="grid"><div><label>OD Premium</label><input id="odPremium" type="number" min="0" step=".01" placeholder="Enter OD premium"></div><div><label>Payout % (Manual)</label><div class="manual"><input id="manualPayout" type="number" min="0" step=".01" placeholder="Enter payout %"><span>%</span></div></div><div><label>Policy Sale Price</label><input id="odSalePrice" type="number" min="0" step=".01" placeholder="Enter policy sale price"></div></div></div><div class="results"><div class="rhead"><h2>Calculation Result</h2><div><button class="toggle" id="tdsToggle">Show TDS</button> <span class="status">Auto calculated</span></div></div><div class="table"><table><thead><tr><th>Net Premium</th><th>Payout Amt</th><th id="thTds" class="hidden">TDS</th><th>Net Payout</th><th>Net Policy Amt</th><th>Margin</th></tr></thead><tbody><tr><td id="net">₹0.00</td><td id="pay">₹0.00</td><td id="tds" class="hidden">₹0.00</td><td id="np">₹0.00</td><td id="npa">₹0.00</td><td id="margin">₹0.00</td></tr></tbody></table></div></div></section><footer>Developer Contact: <a href="mailto:lalasgipolicy@gmail.com">lalasgipolicy@gmail.com</a></footer></main><script>
-(()=>{let mode='total',p=48,show=false,$=id=>document.getElementById(id),num=id=>Math.max(0,Number($(id).value)||0),money=x=>'₹'+Number(x||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});function calc(){let n,pa,s;if(mode==='total'){let t=num('totalPremium');s=num('totalSalePrice');n=t/118*100;pa=n*p/100}else{let o=num('odPremium');s=num('odSalePrice');n=o;pa=o*num('manualPayout')/100}let t=pa*2/100,np=pa-t,npa=mode==='total'?num('totalPremium')-np:n-np,m=s-npa; $('net').textContent=money(n);$('pay').textContent=money(pa);$('tds').textContent=money(t);$('np').textContent=money(np);$('npa').textContent=money(npa);$('margin').textContent=money(m)}function set(m){mode=m;$('totalPanel').classList.toggle('hidden',m!=='total');$('odPanel').classList.toggle('hidden',m!=='od');$('tabTotal').classList.toggle('active',m==='total');$('tabOd').classList.toggle('active',m==='od');calc()}$('tabTotal').onclick=()=>set('total');$('tabOd').onclick=()=>set('od');$('tdsToggle').onclick=()=>{show=!show;$('thTds').classList.toggle('hidden',!show);$('tds').classList.toggle('hidden',!show);$('tdsToggle').textContent=show?'Hide TDS':'Show TDS'};document.querySelectorAll('.pb').forEach(b=>b.onclick=()=>{p=Number(b.dataset.p);document.querySelectorAll('.pb').forEach(x=>x.classList.remove('active'));b.classList.add('active');calc()});document.querySelectorAll('input').forEach(x=>x.oninput=calc);calc()})();
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Insurance Policy Payout Calculator</title>
+  <style>
+    :root {
+      /* Soft Light Modern Palette */
+      --bg: #f8fafc;
+      --s: #ffffff;
+      --ss: #f1f5f9;
+      --t: #1e293b;
+      --m: #64748b;
+      --b: #e2e8f0;
+      --a: #3b82f6;
+      --as: #eff6ff;
+      --g: #059669;
+      --gs: #ecfdf5;
+      --shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--t);
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .shell {
+      width: min(840px, 100%);
+      margin: auto;
+      padding: 32px 20px;
+    }
+    
+    .brand {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    
+    .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--a);
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
+    }
+    
+    .brand h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .sub {
+      margin: 4px 0 0 0;
+      color: var(--m);
+      font-size: 14px;
+    }
+    
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    
+    .tab, .card {
+      background: var(--s);
+      border: 1px solid var(--b);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+    
+    .tab {
+      padding: 16px 20px;
+      text-align: left;
+      color: var(--t);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .tab:hover {
+      border-color: #cbd5e1;
+    }
+    
+    .tab.active {
+      border-color: var(--a);
+      background: var(--as);
+    }
+    
+    .tt {
+      font-weight: 700;
+      font-size: 15px;
+    }
+    
+    .td {
+      color: var(--m);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    
+    .card {
+      padding: 24px;
+    }
+    
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--t);
+    }
+    
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-items: end;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      align-items: end;
+    }
+    
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--m);
+      margin-bottom: 8px;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--b);
+      border-radius: 10px;
+      background: var(--ss);
+      color: var(--t);
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    
+    input:focus {
+      border-color: var(--a);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    }
+    
+    .payouts {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .pb, .toggle {
+      border: 1px solid var(--b);
+      background: var(--ss);
+      color: var(--t);
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    .pb:hover, .toggle:hover {
+      background: #e2e8f0;
+    }
+    
+    .pb.active {
+      background: var(--a);
+      color: #fff;
+      border-color: var(--a);
+      box-shadow: 0 3px 8px rgba(59, 130, 246, 0.25);
+    }
+    
+    .manual {
+      position: relative;
+    }
+    
+    .manual span {
+      position: absolute;
+      right: 14px;
+      top: 13px;
+      color: var(--m);
+      font-weight: 600;
+    }
+    
+    .manual input {
+      padding-right: 32px;
+    }
+    
+    .results {
+      margin-top: 28px;
+      border-top: 1px solid var(--b);
+      padding-top: 20px;
+    }
+    
+    .rhead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .rhead h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    
+    .status {
+      color: var(--g);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--gs);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid #a7f3d0;
+    }
+
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--b);
+      border-radius: 14px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--b);
+      transition: background 0.15s ease;
+    }
+
+    .result-row:last-child {
+      border-bottom: 0;
+    }
+
+    .result-row:hover {
+      background: #fafbfc;
+    }
+
+    .result-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--m);
+    }
+
+    .result-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--t);
+      text-align: right;
+    }
+
+    .result-row.highlight {
+      background: var(--as);
+      border-top: 1px dashed var(--a);
+    }
+
+    .result-row.highlight .result-label {
+      color: var(--a);
+      font-size: 15px;
+    }
+
+    .result-row.highlight .result-value {
+      color: var(--a);
+      font-size: 18px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+    
+    footer {
+      text-align: center;
+      color: var(--m);
+      font-size: 13px;
+      padding: 28px 0;
+      line-height: 1.6;
+    }
+
+    .dev-name {
+      font-weight: 700;
+      color: var(--t);
+    }
+    
+    footer a {
+      color: var(--a);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    
+    footer a:hover {
+      text-decoration: underline;
+    }
+    
+    @media (max-width: 860px) {
+      .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tabs, .grid-3, .grid-4 {
+        grid-template-columns: 1fr;
+      }
+      .shell {
+        padding: 20px 14px;
+      }
+      .card {
+        padding: 18px;
+      }
+      .brand h1 {
+        font-size: 20px;
+      }
+      .result-row {
+        padding: 12px 14px;
+      }
+      .result-value {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header class="brand">
+    <div class="logo">GS</div>
+    <div>
+      <h1>Insurance Policy Payout Calculator</h1>
+      <p class="sub">Policy payout, net amount and margin calculation</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" id="tabTotal">
+      <div class="tt">Payout Based on Total Premium</div>
+      <div class="td">Calculate payout from total premium including GST.</div>
+    </button>
+    <button class="tab" id="tabOd">
+      <div class="tt">Payout Based on OD Only</div>
+      <div class="td">Calculate payout directly from OD Premium.</div>
+    </button>
+  </nav>
+
+  <section class="card">
+    <!-- Total Premium Panel -->
+    <div id="totalPanel">
+      <div class="title">Policy Details</div>
+      <div class="grid-3">
+        <div>
+          <label>Total Premium</label>
+          <input id="totalPremium" type="number" min="0" step=".01" placeholder="Enter total premium">
+        </div>
+        <div>
+          <label>Payout %</label>
+          <div class="payouts">
+            <button class="pb active" data-p="48">48%</button>
+            <button class="pb" data-p="50">50%</button>
+            <button class="pb" data-p="55">55%</button>
+          </div>
+        </div>
+        <div>
+          <label>Policy Sale Price</label>
+          <input id="totalSalePrice" type="number" min="0" step=".01" placeholder="Enter policy sale price">
+        </div>
+      </div>
+    </div>
+
+    <!-- OD Only Panel (Includes Manual Total Premium) -->
+    <div id="odPanel" class="hidden">
+      <div class="title">Policy Details</div>
+      <div class="grid-4">
+        <div>
+          <label>Total Premium</label>
+          <input id="odTotalPremium" type="number" min="0" step=".01" placeholder="Enter total premium">
+        </div>
+        <div>
+          <label>OD Premium</label>
+          <input id="odPremium" type="number" min="0" step=".01" placeholder="Enter OD premium">
+        </div>
+        <div>
+          <label>Payout % </label>
+          <div class="manual">
+            <input id="manualPayout" type="number" min="0" step=".01" placeholder="Enter payout %">
+            <span>%</span>
+          </div>
+        </div>
+        <div>
+          <label>Policy Sale Price</label>
+          <input id="odSalePrice" type="number" min="0" step=".01" placeholder="Enter policy sale price">
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Section -->
+    <div class="results">
+      <div class="rhead">
+        <h2>Calculation Result</h2>
+        <div>
+          <button class="toggle" id="tdsToggle">Show TDS</button>
+          <span class="status">Auto calculated</span>
+        </div>
+      </div>
+
+      <div class="result-list">
+        <div class="result-row">
+          <span class="result-label" id="lblNet">Net Premium</span>
+          <span class="result-value" id="net">₹0.00</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Payout Amount</span>
+          <span class="result-value" id="pay">₹0.00</span>
+        </div>
+        <div class="result-row hidden" id="rowTds">
+          <span class="result-label">TDS (2%)</span>
+          <span class="result-value" id="tds">₹0.00</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Net Payout</span>
+          <span class="result-value" id="np">₹0.00</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Net Policy Amount</span>
+          <span class="result-value" id="npa">₹0.00</span>
+        </div>
+        <div class="result-row highlight">
+          <span class="result-label">Margin (Profit)</span>
+          <span class="result-value" id="margin">₹0.00</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Developer: <span class="dev-name">Gaurav Srivastav</span> &bull; Contact: <a href="mailto:lalasgipolicy@gmail.com">lalasgipolicy@gmail.com</a>
+  </footer>
+</main>
+
+<script>
+(()=>{
+  let mode = 'total', p = 48, show = false;
+  const $ = id => document.getElementById(id);
+  const num = id => Math.max(0, Number($(id).value) || 0);
+  const money = x => '₹' + Number(x || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  function calc() {
+    let n, pa, s, tot;
+    if (mode === 'total') {
+      tot = num('totalPremium');
+      s = num('totalSalePrice');
+      n = tot / 118 * 100;
+      pa = n * p / 100;
+      $('lblNet').textContent = 'Net Premium';
+    } else {
+      tot = num('odTotalPremium');
+      let o = num('odPremium');
+      s = num('odSalePrice');
+      n = o;
+      pa = o * num('manualPayout') / 100;
+      $('lblNet').textContent = 'OD Premium';
+    }
+
+    let t = pa * 2 / 100,
+        np = pa - t,
+        npa = tot - np,
+        m = s - npa;
+
+    $('net').textContent = money(n);
+    $('pay').textContent = money(pa);
+    $('tds').textContent = money(t);
+    $('np').textContent = money(np);
+    $('npa').textContent = money(npa);
+    $('margin').textContent = money(m);
+  }
+
+  function set(m) {
+    mode = m;
+    $('totalPanel').classList.toggle('hidden', m !== 'total');
+    $('odPanel').classList.toggle('hidden', m !== 'od');
+    $('tabTotal').classList.toggle('active', m === 'total');
+    $('tabOd').classList.toggle('active', m === 'od');
+    calc();
+  }
+
+  $('tabTotal').onclick = () => set('total');
+  $('tabOd').onclick = () => set('od');
+  $('tdsToggle').onclick = () => {
+    show = !show;
+    $('rowTds').classList.toggle('hidden', !show);
+    $('tdsToggle').textContent = show ? 'Hide TDS' : 'Show TDS';
+  };
+
+  document.querySelectorAll('.pb').forEach(b => b.onclick = () => {
+    p = Number(b.dataset.p);
+    document.querySelectorAll('.pb').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    calc();
+  });
+
+  document.querySelectorAll('input').forEach(x => x.oninput = calc);
+  calc();
+})();
+</script>
+</body>
+</html>
